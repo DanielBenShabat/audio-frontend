@@ -1,6 +1,11 @@
 import { useMemo, useRef, useState } from 'react';
 import './App.css';
 
+// select the correct backend for dev runs vs production builds
+const API_BASE_URL = import.meta.env.DEV
+  ? 'http://localhost:5001'
+  : 'https://audio-backend-5j3t.onrender.com';
+
 function App() {
   const [files, setFiles] = useState<File[]>([]);
   const [isCompressed, setIsCompressed] = useState(false);
@@ -45,7 +50,7 @@ function App() {
     }
 
     try {
-      const res = await fetch('https://audio-backend-5j3t.onrender.com/upload', {
+      const res = await fetch(`${API_BASE_URL}/upload`, {
         method: 'POST',
         body: formData,
       });
