@@ -24,9 +24,12 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  background: radial-gradient(circle at top, rgba(107, 114, 195, 0.85), rgba(44, 50, 115, 0.92)),
-    url('https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=1920&q=80')
-      center/cover fixed no-repeat;
+  background:
+    radial-gradient(circle at top, rgba(107, 114, 195, 0.85), rgba(44, 50, 115, 0.92)),
+    url('https://images.unsplash.com/photo-1545239351-1141bd82e8a6?auto=format&fit=crop&w=1920&q=80')
+      top center / cover no-repeat fixed,
+    url('https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=1920&q=80')
+      center / cover no-repeat fixed;
   position: relative;
 }
 

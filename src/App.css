@@ -62,11 +62,10 @@
   position: absolute;
   inset: -30% -15% auto -15%;
   height: 220px;
-  background: url('https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=1600&q=80')
-    center/cover no-repeat;
+  background: radial-gradient(circle at top left, rgba(83, 163, 255, 0.35), rgba(32, 38, 94, 0));
   opacity: 0.25;
   transform: rotate(-2deg);
-  filter: saturate(1.2);
+  filter: saturate(1);
   pointer-events: none;
 }
 
