@@ -24,14 +24,65 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  /* layer gradient, sound waves, and a recording disk for audio themed backdrop */
+  /* keep a simple gradient here; decorative layers added with pseudo-elements */
   background:
-    radial-gradient(circle at top, rgba(107, 114, 195, 0.85), rgba(44, 50, 115, 0.92)),
-    url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20400%20400'%3E%3Crect%20width='400'%20height='400'%20fill='none'/%3E%3Cpath%20d='M0%20200%20Q50%20120%20100%20200%20T200%20200%20T300%20200%20T400%20200'%20fill='none'%20stroke='%23ffffff'%20stroke-width='6'%20stroke-opacity='0.35'/%3E%3Cpath%20d='M0%20240%20Q50%20160%20100%20240%20T200%20240%20T300%20240%20T400%20240'%20fill='none'%20stroke='%238ac8ff'%20stroke-width='3'%20stroke-opacity='0.4'/%3E%3C/svg%3E")
-      top left / 420px 420px no-repeat fixed,
-    url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20400%20400'%3E%3Ccircle%20cx='200'%20cy='200'%20r='180'%20fill='%230a1740'%20opacity='0.88'/%3E%3Ccircle%20cx='200'%20cy='200'%20r='120'%20fill='none'%20stroke='%234676d6'%20stroke-width='24'%20stroke-opacity='0.5'/%3E%3Ccircle%20cx='200'%20cy='200'%20r='36'%20fill='%23ffffff'%20fill-opacity='0.65'/%3E%3Ccircle%20cx='200'%20cy='200'%20r='12'%20fill='%230a1740'/%3E%3C/svg%3E")
-      bottom right / 360px 360px no-repeat fixed;
+    radial-gradient(circle at top, rgba(107, 114, 195, 0.85), rgba(44, 50, 115, 0.92));
   position: relative;
+  overflow: hidden;
+}
+
+body::before,
+body::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+body::before {
+  /* animated wave panel spanning the viewport */
+  background: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%201200%20400'%3E%3Crect%20width='1200'%20height='400'%20fill='none'/%3E%3Cpath%20d='M0%20200%20Q120%20120%20240%20200%20T480%20200%20T720%20200%20T960%20200%20T1200%20200' fill='none' stroke='%23ffffff' stroke-width='12' stroke-opacity='0.3'/%3E%3Cpath%20d='M0%20260%20Q120%20160%20240%20260%20T480%20260%20T720%20260%20T960%20260%20T1200%20260' fill='none' stroke='%238ac8ff' stroke-width='6' stroke-opacity='0.35'/%3E%3C/svg%3E")
+    center/cover no-repeat;
+  opacity: 0.55;
+}
+
+body::after {
+  /* spinning record disc scaled to viewport */
+  background:
+    radial-gradient(circle at center, rgba(255, 255, 255, 0.4) 0 10%, transparent 11%),
+    radial-gradient(circle at center, rgba(45, 64, 124, 0.85) 0 22%, transparent 23%),
+    radial-gradient(circle at center, rgba(10, 20, 50, 0.9) 0 60%, rgba(8, 12, 32, 0.85) 61% 100%);
+  width: min(20vw, 520px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  bottom: -20vh;
+  right: -12vw;
+  box-shadow: 0 30px 80px rgba(8, 12, 32, 0.4);
+  animation: bodyRecordSpin 24s linear infinite;
+  opacity: 0.9;
+}
+
+@keyframes bodyWaveDrift {
+  0%,
+  100% {
+    transform: translate3d(-8%, -12%, 0) scale(1.15);
+  }
+  40% {
+    transform: translate3d(2%, -6%, 0) scale(1.1);
+  }
+  70% {
+    transform: translate3d(-4%, -4%, 0) scale(1.2);
+  }
+}
+
+@keyframes bodyRecordSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 a {

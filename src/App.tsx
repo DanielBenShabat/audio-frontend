@@ -85,7 +85,7 @@ function App() {
         <span className="header__badge">The Song Trio</span>
         <h1>Audio File Upload</h1>
         <p className="subtitle">
-          Upload audio assets and we will confirm once they reach the backend.
+          Upload your bad songs to enhance them!
         </p>
       </header>
 
