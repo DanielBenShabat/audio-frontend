@@ -5,12 +5,14 @@ function App() {
   const [files, setFiles] = useState<File[]>([]);
   const [isCompressed, setIsCompressed] = useState(false);
   const [compressionType, setCompressionType] = useState('');
+  // allow users to describe bespoke audio compression workflows
+  const [customCompression, setCustomCompression] = useState('');
   const [message, setMessage] = useState('');
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-
+  // list of common audio compression formats so the backend receives meaningful metadata
   const compressionOptions = useMemo(
-    () => ['zip', 'rar', '7z', 'gzip', 'tar.gz', 'other'],
+    () => ['mp3', 'aac', 'flac', 'alac', 'wav', 'ogg', 'opus', 'dolby atmos', 'other'],
     [],
   );
 
@@ -34,8 +36,12 @@ function App() {
       formData.append('audio', file);
     });
     formData.append('compressed', String(isCompressed));
-    if (isCompressed && compressionType) {
-      formData.append('compression_type', compressionType);
+    const resolvedCompression =
+      compressionType === 'other' && customCompression
+        ? customCompression
+        : compressionType;
+    if (isCompressed && resolvedCompression) {
+      formData.append('compression_type', resolvedCompression);
     }
 
     try {
@@ -47,6 +53,7 @@ function App() {
       setMessage(data.message || 'Upload complete!');
       setFiles([]);
       setCompressionType('');
+      setCustomCompression('');
       setIsCompressed(false);
       // reset the native input so subsequent uploads work with the same file names
       if (fileInputRef.current) {
@@ -62,6 +69,7 @@ function App() {
   return (
     <div className="page">
       <header className="header">
+        <span className="header__badge">Audio Lab</span>
         <h1>Audio File Upload</h1>
         <p className="subtitle">
           Upload audio assets and describe their compression so we can process
@@ -104,6 +112,7 @@ function App() {
                 onChange={() => {
                   setIsCompressed(false);
                   setCompressionType('');
+                  setCustomCompression('');
                 }}
               />
               Not compressed
@@ -139,12 +148,32 @@ function App() {
               </select>
             </div>
           )}
+          {isCompressed && compressionType === 'other' && (
+            <div className="compression-select">
+              <label className="input-label" htmlFor="custom-compression">
+                Describe the compression
+              </label>
+              <input
+                id="custom-compression"
+                type="text"
+                placeholder="e.g., custom Dolby mix"
+                value={customCompression}
+                onChange={(event) => setCustomCompression(event.target.value)}
+              />
+            </div>
+          )}
         </section>
 
         <button
           className="primary-button"
           type="submit"
-          disabled={uploading || !files.length || (isCompressed && !compressionType)}
+          disabled={
+            uploading ||
+            !files.length ||
+            (isCompressed &&
+              (!compressionType ||
+                (compressionType === 'other' && !customCompression.trim())))
+          }
         >
           {uploading ? 'Uploading…' : 'Upload'}
         </button>

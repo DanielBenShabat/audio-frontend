@@ -23,6 +23,20 @@
   font-weight: 700;
 }
 
+.header__badge {
+  display: inline-flex;
+  align-self: flex-start;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  background: rgba(71, 108, 155, 0.65);
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+}
+
 .subtitle {
   margin: 0;
   font-size: 1.1rem;
@@ -36,9 +50,29 @@
   gap: 1.5rem;
   padding: 2rem;
   border-radius: 18px;
-  background: rgba(28, 34, 73, 0.35);
-  backdrop-filter: blur(10px);
-  box-shadow: 0 24px 45px rgba(16, 24, 40, 0.18);
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(155deg, rgba(32, 38, 94, 0.8), rgba(45, 64, 124, 0.75));
+  backdrop-filter: blur(14px);
+  box-shadow: 0 28px 55px rgba(8, 12, 32, 0.35);
+}
+
+.upload-form::before {
+  content: '';
+  position: absolute;
+  inset: -30% -15% auto -15%;
+  height: 220px;
+  background: url('https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=1600&q=80')
+    center/cover no-repeat;
+  opacity: 0.25;
+  transform: rotate(-2deg);
+  filter: saturate(1.2);
+  pointer-events: none;
+}
+
+.upload-form > * {
+  position: relative;
+  z-index: 1;
 }
 
 .input-label {
@@ -54,13 +88,14 @@
   padding: 1rem;
   background: rgba(30, 34, 71, 0.6);
   color: inherit;
-  transition: border-color 0.2s ease, background 0.2s ease;
+  transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
 }
 
 .file-input:hover,
 .file-input:focus-visible {
   border-color: #478e9b;
   background: rgba(30, 34, 71, 0.8);
+  transform: translateY(-1px);
 }
 
 .file-list {
@@ -122,8 +157,21 @@
   transition: border-color 0.2s ease, background 0.2s ease;
 }
 
+.compression-select input {
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(17, 22, 58, 0.6);
+  color: inherit;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
 .compression-select select:focus-visible,
-.compression-select select:hover {
+.compression-select select:hover,
+.compression-select input:focus-visible,
+.compression-select input:hover {
   border-color: #478e9b;
   background: rgba(17, 22, 58, 0.75);
   outline: none;
@@ -170,6 +218,10 @@
 @media (max-width: 600px) {
   #root {
     padding: 2.5rem 1.5rem;
+  }
+
+  .header h1 {
+    font-size: 2.25rem;
   }
 
   .upload-form {
