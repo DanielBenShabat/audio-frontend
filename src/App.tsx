@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import './App.css';
 
 // select the correct backend for dev runs vs production builds
@@ -8,27 +8,23 @@ const API_BASE_URL = import.meta.env.DEV
 
 function App() {
   const [files, setFiles] = useState<File[]>([]);
-  const [isCompressed, setIsCompressed] = useState(false);
-  const [compressionType, setCompressionType] = useState('');
-  // allow users to describe bespoke audio compression workflows
-  const [customCompression, setCustomCompression] = useState('');
   const [message, setMessage] = useState('');
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  // list of common audio compression formats so the backend receives meaningful metadata
-  const compressionOptions = useMemo(
-    () => ['mp3', 'aac', 'flac', 'alac', 'wav', 'ogg', 'opus', 'dolby atmos', 'other'],
-    [],
-  );
 
-  // capture all files chosen in the file picker
+  // capture file selections so the upload button can send them together
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const nextFiles = e.target.files ? Array.from(e.target.files) : [];
-    setFiles(nextFiles);
+    const selectedFiles = e.target.files ? Array.from(e.target.files) : [];
+    setFiles(selectedFiles);
     setMessage('');
   };
 
-  // submit files and compression metadata to the backend
+  // remove a single file from the queue before uploading
+  const handleRemoveFile = (indexToRemove: number) => {
+    setFiles((prev) => prev.filter((_, index) => index !== indexToRemove));
+  };
+
+  // submit the chosen files and confirm the result to the user
   const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!files.length) {
@@ -40,15 +36,6 @@ function App() {
     files.forEach((file) => {
       formData.append('audio', file);
     });
-    formData.append('compressed', String(isCompressed));
-    const resolvedCompression =
-      compressionType === 'other' && customCompression
-        ? customCompression
-        : compressionType;
-    if (isCompressed && resolvedCompression) {
-      formData.append('compression_type', resolvedCompression);
-    }
-
     try {
       const res = await fetch(`${API_BASE_URL}/upload`, {
         method: 'POST',
@@ -56,29 +43,49 @@ function App() {
       });
       const data = await res.json();
       setMessage(data.message || 'Upload complete!');
-      setFiles([]);
-      setCompressionType('');
-      setCustomCompression('');
-      setIsCompressed(false);
-      // reset the native input so subsequent uploads work with the same file names
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
     } catch (err) {
       setMessage('Upload failed.');
     } finally {
       setUploading(false);
+      setFiles([]);
+      // reset the native input so subsequent uploads work with the same file names
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
 
   return (
     <div className="page">
+      {/* full-page wave animation so the background feels alive */}
+      <div className="wave-background" aria-hidden="true">
+        <svg
+          className="hero-waves"
+          xmlns="http://www.w3.org/2000/svg"
+          xmlnsXlink="http://www.w3.org/1999/xlink"
+          viewBox="0 24 150 28"
+          preserveAspectRatio="none"
+          shapeRendering="auto"
+        >
+          <defs>
+            <path
+              id="gentle-wave"
+              d="M-160 44c30 0 58-18 88-18s58 18 88 18 58-18 88-18 58 18 88 18v44h-352z"
+            />
+          </defs>
+          <g className="parallax">
+            <use xlinkHref="#gentle-wave" x="48" y="0" fill="rgba(32, 86, 214, 0.35)" />
+            <use xlinkHref="#gentle-wave" x="48" y="3" fill="rgba(32, 86, 214, 0.25)" />
+            <use xlinkHref="#gentle-wave" x="48" y="5" fill="rgba(32, 86, 214, 0.18)" />
+            <use xlinkHref="#gentle-wave" x="48" y="7" fill="rgba(32, 86, 214, 0.5)" />
+          </g>
+        </svg>
+      </div>
       <header className="header">
-        <span className="header__badge">Audio Lab</span>
+        <span className="header__badge">The Song Trio</span>
         <h1>Audio File Upload</h1>
         <p className="subtitle">
-          Upload audio assets and describe their compression so we can process
-          them accurately.
+          Upload audio assets and we will confirm once they reach the backend.
         </p>
       </header>
 
@@ -94,102 +101,37 @@ function App() {
           accept="audio/*"
           multiple
           onChange={handleFileChange}
+          disabled={uploading}
         />
+        {/* list selected files so users can confirm their choices */}
         {files.length > 0 && (
           <ul className="file-list">
-            {files.map((file) => (
+            {files.map((file, index) => (
               <li key={file.name} className="file-list__item">
-                {file.name}
+                <span className="file-list__name" title={file.name}>
+                  {file.name}
+                </span>
+                <button
+                  type="button"
+                  className="file-remove-button"
+                  onClick={() => handleRemoveFile(index)}
+                >
+                  Remove
+                </button>
               </li>
             ))}
           </ul>
         )}
-
-        <section className="compression-section">
-          <span className="input-label">Compression</span>
-          <div className="radio-group">
-            <label className={`radio-option ${!isCompressed ? 'active' : ''}`}>
-              <input
-                type="radio"
-                name="compression"
-                value="no"
-                checked={!isCompressed}
-                onChange={() => {
-                  setIsCompressed(false);
-                  setCompressionType('');
-                  setCustomCompression('');
-                }}
-              />
-              Not compressed
-            </label>
-            <label className={`radio-option ${isCompressed ? 'active' : ''}`}>
-              <input
-                type="radio"
-                name="compression"
-                value="yes"
-                checked={isCompressed}
-                onChange={() => setIsCompressed(true)}
-              />
-              Compressed
-            </label>
-          </div>
-
-          {isCompressed && (
-            <div className="compression-select">
-              <label className="input-label" htmlFor="compression-type">
-                Compression type
-              </label>
-              <select
-                id="compression-type"
-                value={compressionType}
-                onChange={(event) => setCompressionType(event.target.value)}
-              >
-                <option value="">Select a compression</option>
-                {compressionOptions.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-          {isCompressed && compressionType === 'other' && (
-            <div className="compression-select">
-              <label className="input-label" htmlFor="custom-compression">
-                Describe the compression
-              </label>
-              <input
-                id="custom-compression"
-                type="text"
-                placeholder="e.g., custom Dolby mix"
-                value={customCompression}
-                onChange={(event) => setCustomCompression(event.target.value)}
-              />
-            </div>
-          )}
-        </section>
-
         <button
           className="primary-button"
           type="submit"
-          disabled={
-            uploading ||
-            !files.length ||
-            (isCompressed &&
-              (!compressionType ||
-                (compressionType === 'other' && !customCompression.trim())))
-          }
+          disabled={uploading || !files.length}
         >
           {uploading ? 'Uploading…' : 'Upload'}
         </button>
       </form>
 
       {message && <p className="status-message">{message}</p>}
-      <div className="helper-text">
-        <p>
-          Need to upload more? Simply select additional files and submit again.
-        </p>
-      </div>
     </div>
   );
 }
