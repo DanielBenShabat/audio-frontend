@@ -3,6 +3,7 @@
   margin: 0 auto;
   padding: 3.5rem 2.5rem;
   text-align: left;
+  min-height: calc(100vh - 4rem);
 }
 
 .page {
@@ -329,6 +330,25 @@
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  padding-right: 0.5rem;
+}
+
+.songs-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.songs-list::-webkit-scrollbar-track {
+  background: rgba(17, 22, 58, 0.3);
+  border-radius: 3px;
+}
+
+.songs-list::-webkit-scrollbar-thumb {
+  background: rgba(71, 108, 155, 0.6);
+  border-radius: 3px;
+}
+
+.songs-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(71, 108, 155, 0.8);
 }
 
 .songs-list h3 {
@@ -347,6 +367,12 @@
   background: rgba(17, 22, 58, 0.55);
   gap: 1rem;
   transition: background 0.2s ease;
+}
+
+.song-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
 }
 
 .song-item:hover {
@@ -398,6 +424,43 @@
   transform: none;
 }
 
+.green-download {
+  background: linear-gradient(135deg, #22c55e, #16a34a) !important;
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+}
+
+.green-download:hover:not(:disabled) {
+  background: linear-gradient(135deg, #16a34a, #15803d) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(34, 197, 94, 0.4);
+}
+
+.delete-button {
+  flex-shrink: 0;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+  color: #ffffff;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+}
+
+.delete-button:hover:not(:disabled) {
+  background: linear-gradient(135deg, #b91c1c, #991b1b);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(220, 38, 38, 0.4);
+}
+
+.delete-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
 .no-songs {
   text-align: center;
   padding: 2rem;
@@ -441,7 +504,13 @@
     gap: 0.75rem;
   }
 
-  .download-button {
+  .song-actions {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .download-button,
+  .delete-button {
     align-self: center;
     min-width: 120px;
   }

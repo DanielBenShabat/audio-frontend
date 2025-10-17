@@ -23,12 +23,13 @@ body {
   min-height: 100vh;
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start;
   /* keep a simple gradient here; decorative layers added with pseudo-elements */
   background:
     radial-gradient(circle at top, rgba(107, 114, 195, 0.85), rgba(44, 50, 115, 0.92));
   position: relative;
-  overflow: hidden;
+  overflow-y: auto;
+  padding: 2rem 0;
 }
 
 body::before,

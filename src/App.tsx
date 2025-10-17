@@ -7,9 +7,21 @@ const API_BASE_URL = import.meta.env.DEV
   : 'https://audio-backend-5j3t.onrender.com';
 
 type Song = {
-  key: string;
-  size: number;
-  lastModified: string;
+  id: string;
+  artist: string;
+  song_name: string;
+  file_name: string;
+  compression_type: string;
+  created_by: string;
+  created_at: string;
+  metadata: {
+    original_filename: string;
+    upload_timestamp: string;
+  };
+  file_size: number;
+  s3_key: string;
+  mime_type: string;
+  presignedUrl?: string;
 };
 
 type TabType = 'upload' | 'samples';
@@ -22,6 +34,7 @@ function App() {
   const [songs, setSongs] = useState<Song[]>([]);
   const [loadingSongs, setLoadingSongs] = useState(false);
   const [downloadingSongs, setDownloadingSongs] = useState<Set<string>>(new Set());
+  const [deletingSongs, setDeletingSongs] = useState<Set<string>>(new Set());
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   // capture file selections so the upload button can send them together
@@ -67,12 +80,12 @@ function App() {
     }
   };
 
-  // fetch random sample songs
+  // fetch all sample songs
   const fetchSampleSongs = async () => {
     setLoadingSongs(true);
     setMessage('');
     try {
-      const res = await fetch(`${API_BASE_URL}/files/random?count=3`);
+      const res = await fetch(`${API_BASE_URL}/files/all`);
       const data = await res.json();
       if (data.success) {
         setSongs(data.songs || []);
@@ -88,29 +101,87 @@ function App() {
   };
 
   // download a specific song
-  const downloadSong = async (songKey: string) => {
-    setDownloadingSongs(prev => new Set(prev).add(songKey));
+  const downloadSong = async (songId: string, songName: string) => {
+    setDownloadingSongs(prev => new Set(prev).add(songId));
     try {
-      const res = await fetch(`${API_BASE_URL}/files/retrieve/${encodeURIComponent(songKey)}`);
-      const data = await res.json();
-      if (data.success && data.presignedUrl) {
-        // Create a temporary link to download the file
-        const link = document.createElement('a');
-        link.href = data.presignedUrl;
-        link.download = songKey;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        setMessage(`Downloading ${songKey}...`);
-      } else {
-        setMessage('Failed to get download link.');
+      console.log(`Attempting to download song: ${songId}`);
+      
+      // Use the new CORS-safe download endpoint that streams through backend
+      const response = await fetch(`${API_BASE_URL}/files/download/${songId}`);
+      
+      console.log('Response status:', response.status);
+      console.log('Response headers:', response.headers);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
+      
+      // Get the blob from the response
+      const blob = await response.blob();
+      console.log('Blob size:', blob.size, 'bytes');
+      
+      if (blob.size === 0) {
+        throw new Error('Downloaded file is empty');
+      }
+      
+      // Create a download link
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = songName;
+      document.body.appendChild(link);
+      link.click();
+      
+      // Clean up
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      setMessage(`Downloaded ${songName} successfully!`);
     } catch (err) {
-      setMessage('Download failed.');
+      console.error('Download error:', err);
+      setMessage(`Download failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
     } finally {
       setDownloadingSongs(prev => {
         const newSet = new Set(prev);
-        newSet.delete(songKey);
+        newSet.delete(songId);
+        return newSet;
+      });
+    }
+  };
+
+  // delete a specific song
+  const deleteSong = async (songId: string, songName: string) => {
+    if (!confirm(`Are you sure you want to delete "${songName}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    setDeletingSongs(prev => new Set(prev).add(songId));
+    try {
+      const res = await fetch(`${API_BASE_URL}/files/song/${songId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': 'Bearer admin-token' // Placeholder for now
+        }
+      });
+      const data = await res.json();
+      
+      if (data.success) {
+        // Remove the song from the local state
+        setSongs(prev => prev.filter(song => song.id !== songId));
+        
+        // Show detailed deletion status
+        const dbStatus = data.deletedFromDatabase ? '✅ Database' : '❌ Database';
+        const s3Status = data.deletedFromS3 ? '✅ Cloud Storage' : '❌ Cloud Storage';
+        setMessage(`"${songName}" deleted: ${dbStatus} | ${s3Status}`);
+      } else {
+        setMessage(`Failed to delete "${songName}". ${data.message || 'Unknown error.'}`);
+      }
+    } catch (err) {
+      setMessage(`Failed to delete "${songName}". Please try again.`);
+    } finally {
+      setDeletingSongs(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(songId);
         return newSet;
       });
     }
@@ -225,13 +296,13 @@ function App() {
         <div className="samples-container">
           <div className="samples-header">
             <h2>Sample Songs</h2>
-            <p>Discover random songs from our collection</p>
+            <p>Browse and download songs from our collection</p>
             <button
               className="primary-button"
               onClick={fetchSampleSongs}
               disabled={loadingSongs}
             >
-              {loadingSongs ? 'Loading...' : 'Get Sample Songs'}
+              {loadingSongs ? 'Loading...' : 'Load All Songs'}
             </button>
           </div>
 
@@ -239,21 +310,29 @@ function App() {
             <div className="songs-list">
               <h3>Available Songs ({songs.length})</h3>
               {songs.map((song) => (
-                <div key={song.key} className="song-item">
+                <div key={song.id} className="song-item">
                   <div className="song-info">
-                    <h4 className="song-name">{song.key}</h4>
+                    <h4 className="song-name">{song.artist} - {song.song_name}</h4>
                     <p className="song-details">
-                      Size: {formatFileSize(song.size)} • 
-                      Modified: {new Date(song.lastModified).toLocaleDateString()}
+                      <strong>Size: {formatFileSize(song.file_size)} • Type: {song.compression_type.toUpperCase()}</strong>
                     </p>
                   </div>
-                  <button
-                    className="download-button"
-                    onClick={() => downloadSong(song.key)}
-                    disabled={downloadingSongs.has(song.key)}
-                  >
-                    {downloadingSongs.has(song.key) ? 'Downloading...' : 'Download'}
-                  </button>
+                  <div className="song-actions">
+                    <button
+                      className="download-button green-download"
+                      onClick={() => downloadSong(song.id, `${song.artist} - ${song.song_name}.${song.compression_type}`)}
+                      disabled={downloadingSongs.has(song.id) || deletingSongs.has(song.id)}
+                    >
+                      {downloadingSongs.has(song.id) ? 'Downloading...' : 'Download'}
+                    </button>
+                    <button
+                      className="delete-button red-delete"
+                      onClick={() => deleteSong(song.id, `${song.artist} - ${song.song_name}`)}
+                      disabled={downloadingSongs.has(song.id) || deletingSongs.has(song.id)}
+                    >
+                      {deletingSongs.has(song.id) ? 'Deleting...' : 'Delete'}
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -261,7 +340,7 @@ function App() {
 
           {songs.length === 0 && !loadingSongs && (
             <div className="no-songs">
-              <p>Click "Get Sample Songs" to load random songs from our collection.</p>
+              <p>Click "Load All Songs" to browse songs from our collection.</p>
             </div>
           )}
         </div>
